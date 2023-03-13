@@ -1,94 +1,62 @@
-import * as React from "react"
-import { Link, graphql } from "gatsby"
+import React from "react";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
 
-import Bio from "../components/bio"
-import Layout from "../components/layout"
-import Seo from "../components/seo"
+import { setNavigatorPosition, setNavigatorShape } from "../state/store";
+import { featureNavigator } from "../utils/shared";
+import Seo from "../components/Seo";
 
-const BlogIndex = ({ data, location }) => {
-  const siteTitle = data.site.siteMetadata?.title || `Title`
-  const posts = data.allMarkdownRemark.nodes
+class Index extends React.Component {
+  featureNavigator = featureNavigator.bind(this);
 
-  if (posts.length === 0) {
-    return (
-      <Layout location={location} title={siteTitle}>
-        <Bio />
-        <p>
-          No blog posts found. Add markdown posts to "content/blog" (or the
-          directory you specified for the "gatsby-source-filesystem" plugin in
-          gatsby-config.js).
-        </p>
-      </Layout>
-    )
+  componentWillMount() {
+    if (this.props.navigatorPosition !== "is-featured") {
+      this.props.setNavigatorPosition("is-featured");
+    }
   }
 
-  return (
-    <Layout location={location} title={siteTitle}>
-      <Bio />
-      <ol style={{ listStyle: `none` }}>
-        {posts.map(post => {
-          const title = post.frontmatter.title || post.fields.slug
+  render() {
+    const { data } = this.props;
+    const facebook = (((data || {}).site || {}).siteMetadata || {}).facebook;
 
-          return (
-            <li key={post.fields.slug}>
-              <article
-                className="post-list-item"
-                itemScope
-                itemType="http://schema.org/Article"
-              >
-                <header>
-                  <h2>
-                    <Link to={post.fields.slug} itemProp="url">
-                      <span itemProp="headline">{title}</span>
-                    </Link>
-                  </h2>
-                  <small>{post.frontmatter.date}</small>
-                </header>
-                <section>
-                  <p
-                    dangerouslySetInnerHTML={{
-                      __html: post.frontmatter.description || post.excerpt,
-                    }}
-                    itemProp="description"
-                  />
-                </section>
-              </article>
-            </li>
-          )
-        })}
-      </ol>
-    </Layout>
-  )
+    return (
+      <div>
+        <Seo facebook={facebook} />
+      </div>
+    );
+  }
 }
 
-export default BlogIndex
+Index.propTypes = {
+  data: PropTypes.object.isRequired,
+  navigatorPosition: PropTypes.string.isRequired,
+  setNavigatorPosition: PropTypes.func.isRequired,
+  isWideScreen: PropTypes.bool.isRequired
+};
 
-/**
- * Head export to define metadata for the page
- *
- * See: https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-head/
- */
-export const Head = () => <Seo title="All posts" />
+const mapStateToProps = (state, ownProps) => {
+  return {
+    navigatorPosition: state.navigatorPosition,
+    isWideScreen: state.isWideScreen
+  };
+};
 
+const mapDispatchToProps = {
+  setNavigatorPosition,
+  setNavigatorShape
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Index);
+
+//eslint-disable-next-line no-undef
 export const pageQuery = graphql`
-  {
+  query IndexQuery {
     site {
       siteMetadata {
-        title
-      }
-    }
-    allMarkdownRemark(sort: { frontmatter: { date: DESC } }) {
-      nodes {
-        excerpt
-        fields {
-          slug
-        }
-        frontmatter {
-          date(formatString: "MMMM DD, YYYY")
-          title
-          description
+        facebook {
+          appId
         }
       }
     }
   }
-`
+`;
